@@ -5,6 +5,7 @@ export const Media: CollectionConfig = {
   access: {
     read: () => true,
   },
+  folders: true,
   fields: [
     {
       name: 'alt',

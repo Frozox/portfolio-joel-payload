@@ -69,16 +69,40 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    arts: Art;
+    'art-categories': ArtCategory;
+    'art-tags': ArtTag;
+    'art-tag-categories': ArtTagCategory;
     'payload-kv': PayloadKv;
+    'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    'art-categories': {
+      arts: 'arts';
+    };
+    'art-tags': {
+      arts: 'arts';
+    };
+    'art-tag-categories': {
+      art_tags: 'art-tags';
+      art_categories: 'art-categories';
+    };
+    'payload-folders': {
+      documentsAndFolders: 'payload-folders' | 'media';
+    };
+  };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    arts: ArtsSelect<false> | ArtsSelect<true>;
+    'art-categories': ArtCategoriesSelect<false> | ArtCategoriesSelect<true>;
+    'art-tags': ArtTagsSelect<false> | ArtTagsSelect<true>;
+    'art-tag-categories': ArtTagCategoriesSelect<false> | ArtTagCategoriesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -86,10 +110,14 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
-  locale: null;
+  fallbackLocale: ('false' | 'none' | 'null') | false | null | ('fr' | 'en') | ('fr' | 'en')[];
+  globals: {
+    news: News;
+  };
+  globalsSelect: {
+    news: NewsSelect<false> | NewsSelect<true>;
+  };
+  locale: 'fr' | 'en';
   widgets: {
     collections: CollectionsWidget;
   };
@@ -149,6 +177,7 @@ export interface User {
 export interface Media {
   id: number;
   alt: string;
+  folder?: (number | null) | FolderInterface;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -160,6 +189,122 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-folders".
+ */
+export interface FolderInterface {
+  id: number;
+  name: string;
+  folder?: (number | null) | FolderInterface;
+  documentsAndFolders?: {
+    docs?: (
+      | {
+          relationTo?: 'payload-folders';
+          value: number | FolderInterface;
+        }
+      | {
+          relationTo?: 'media';
+          value: number | Media;
+        }
+    )[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  folderType?: 'media'[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "arts".
+ */
+export interface Art {
+  id: number;
+  _order?: string | null;
+  name: string;
+  description?: string | null;
+  date?: string | null;
+  thumbnail: number | Media;
+  images?: (number | Media)[] | null;
+  height: number;
+  width: number;
+  depth?: number | null;
+  art_category?: (number | null) | ArtCategory;
+  art_tags?: (number | ArtTag)[] | null;
+  sold_out: boolean;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "art-categories".
+ */
+export interface ArtCategory {
+  id: number;
+  _order?: string | null;
+  name: string;
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  image: number | Media;
+  metaDescription?: string | null;
+  metaKeywords?: string | null;
+  art_tag_categories?: (number | ArtTagCategory)[] | null;
+  arts?: {
+    docs?: (number | Art)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "art-tag-categories".
+ */
+export interface ArtTagCategory {
+  id: number;
+  _order?: string | null;
+  name: string;
+  display_name: string;
+  art_tags?: {
+    docs?: (number | ArtTag)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  art_categories?: {
+    docs?: (number | ArtCategory)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "art-tags".
+ */
+export interface ArtTag {
+  id: number;
+  _order?: string | null;
+  tag: string;
+  art_tag_category?: (number | null) | ArtTagCategory;
+  arts?: {
+    docs?: (number | Art)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -192,6 +337,26 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'arts';
+        value: number | Art;
+      } | null)
+    | ({
+        relationTo: 'art-categories';
+        value: number | ArtCategory;
+      } | null)
+    | ({
+        relationTo: 'art-tags';
+        value: number | ArtTag;
+      } | null)
+    | ({
+        relationTo: 'art-tag-categories';
+        value: number | ArtTagCategory;
+      } | null)
+    | ({
+        relationTo: 'payload-folders';
+        value: number | FolderInterface;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -263,6 +428,7 @@ export interface UsersSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  folder?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -277,11 +443,90 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "arts_select".
+ */
+export interface ArtsSelect<T extends boolean = true> {
+  _order?: T;
+  name?: T;
+  description?: T;
+  date?: T;
+  thumbnail?: T;
+  images?: T;
+  height?: T;
+  width?: T;
+  depth?: T;
+  art_category?: T;
+  art_tags?: T;
+  sold_out?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "art-categories_select".
+ */
+export interface ArtCategoriesSelect<T extends boolean = true> {
+  _order?: T;
+  name?: T;
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  image?: T;
+  metaDescription?: T;
+  metaKeywords?: T;
+  art_tag_categories?: T;
+  arts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "art-tags_select".
+ */
+export interface ArtTagsSelect<T extends boolean = true> {
+  _order?: T;
+  tag?: T;
+  art_tag_category?: T;
+  arts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "art-tag-categories_select".
+ */
+export interface ArtTagCategoriesSelect<T extends boolean = true> {
+  _order?: T;
+  name?: T;
+  display_name?: T;
+  art_tags?: T;
+  art_categories?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
   key?: T;
   data?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-folders_select".
+ */
+export interface PayloadFoldersSelect<T extends boolean = true> {
+  name?: T;
+  folder?: T;
+  documentsAndFolders?: T;
+  folderType?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -314,6 +559,149 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news".
+ */
+export interface News {
+  id: number;
+  content?: (TextBlock | MediaBlock | TextMediaBlock | SpacerBlock)[] | null;
+  _status?: ('draft' | 'published') | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TextBlock".
+ */
+export interface TextBlock {
+  title?: string | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'textBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MediaBlock".
+ */
+export interface MediaBlock {
+  media: number | Media;
+  mediaPosition: 'left' | 'right' | 'center';
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'mediaBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TextMediaBlock".
+ */
+export interface TextMediaBlock {
+  title?: string | null;
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  media: number | Media;
+  mediaPosition: 'left' | 'right';
+  mediaMobilePosition: 'top' | 'bottom';
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'textMediaBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SpacerBlock".
+ */
+export interface SpacerBlock {
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'spacerBlock';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news_select".
+ */
+export interface NewsSelect<T extends boolean = true> {
+  content?:
+    | T
+    | {
+        textBlock?: T | TextBlockSelect<T>;
+        mediaBlock?: T | MediaBlockSelect<T>;
+        textMediaBlock?: T | TextMediaBlockSelect<T>;
+        spacerBlock?: T | SpacerBlockSelect<T>;
+      };
+  _status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TextBlock_select".
+ */
+export interface TextBlockSelect<T extends boolean = true> {
+  title?: T;
+  content?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MediaBlock_select".
+ */
+export interface MediaBlockSelect<T extends boolean = true> {
+  media?: T;
+  mediaPosition?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TextMediaBlock_select".
+ */
+export interface TextMediaBlockSelect<T extends boolean = true> {
+  title?: T;
+  content?: T;
+  media?: T;
+  mediaPosition?: T;
+  mediaMobilePosition?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "SpacerBlock_select".
+ */
+export interface SpacerBlockSelect<T extends boolean = true> {
+  id?: T;
+  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
