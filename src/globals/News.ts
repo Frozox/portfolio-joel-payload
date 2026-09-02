@@ -7,7 +7,7 @@ import { TextMediaBlock } from '../blocks/news/TextMediaBlock'
 
 export const News: GlobalConfig = {
   slug: 'news',
-  label: 'News',
+  label: 'Expositions',
   access: {
     read: () => true,
   },

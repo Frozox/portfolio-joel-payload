@@ -73,6 +73,7 @@ export interface Config {
     'art-categories': ArtCategory;
     'art-tags': ArtTag;
     'art-tag-categories': ArtTagCategory;
+    'contact-submissions': ContactSubmission;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -101,6 +102,7 @@ export interface Config {
     'art-categories': ArtCategoriesSelect<false> | ArtCategoriesSelect<true>;
     'art-tags': ArtTagsSelect<false> | ArtTagsSelect<true>;
     'art-tag-categories': ArtTagCategoriesSelect<false> | ArtTagCategoriesSelect<true>;
+    'contact-submissions': ContactSubmissionsSelect<false> | ContactSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -113,9 +115,11 @@ export interface Config {
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('fr' | 'en') | ('fr' | 'en')[];
   globals: {
     news: News;
+    'site-images': SiteImage;
   };
   globalsSelect: {
     news: NewsSelect<false> | NewsSelect<true>;
+    'site-images': SiteImagesSelect<false> | SiteImagesSelect<true>;
   };
   locale: 'fr' | 'en';
   widgets: {
@@ -253,13 +257,20 @@ export interface ArtCategory {
   generateSlug?: boolean | null;
   slug: string;
   image: number | Media;
-  metaDescription?: string | null;
-  metaKeywords?: string | null;
   art_tag_categories?: (number | ArtTagCategory)[] | null;
   arts?: {
     docs?: (number | Art)[];
     hasNextPage?: boolean;
     totalDocs?: number;
+  };
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+    keywords?: string | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -308,6 +319,19 @@ export interface ArtTag {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contact-submissions".
+ */
+export interface ContactSubmission {
+  id: number;
+  fullname: string;
+  email: string;
+  message: string;
+  arts?: (number | Art)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -353,6 +377,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'art-tag-categories';
         value: number | ArtTagCategory;
+      } | null)
+    | ({
+        relationTo: 'contact-submissions';
+        value: number | ContactSubmission;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -473,10 +501,16 @@ export interface ArtCategoriesSelect<T extends boolean = true> {
   generateSlug?: T;
   slug?: T;
   image?: T;
-  metaDescription?: T;
-  metaKeywords?: T;
   art_tag_categories?: T;
   arts?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        keywords?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -507,6 +541,18 @@ export interface ArtTagCategoriesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contact-submissions_select".
+ */
+export interface ContactSubmissionsSelect<T extends boolean = true> {
+  fullname?: T;
+  email?: T;
+  message?: T;
+  arts?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -567,6 +613,15 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 export interface News {
   id: number;
   content?: (TextBlock | MediaBlock | TextMediaBlock | SpacerBlock)[] | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+    keywords?: string | null;
+  };
   _status?: ('draft' | 'published') | null;
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -646,6 +701,17 @@ export interface SpacerBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-images".
+ */
+export interface SiteImage {
+  id: number;
+  home_joel: number | Media;
+  site_logo: number | Media;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "news_select".
  */
 export interface NewsSelect<T extends boolean = true> {
@@ -656,6 +722,14 @@ export interface NewsSelect<T extends boolean = true> {
         mediaBlock?: T | MediaBlockSelect<T>;
         textMediaBlock?: T | TextMediaBlockSelect<T>;
         spacerBlock?: T | SpacerBlockSelect<T>;
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        keywords?: T;
       };
   _status?: T;
   updatedAt?: T;
@@ -702,6 +776,17 @@ export interface TextMediaBlockSelect<T extends boolean = true> {
 export interface SpacerBlockSelect<T extends boolean = true> {
   id?: T;
   blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-images_select".
+ */
+export interface SiteImagesSelect<T extends boolean = true> {
+  home_joel?: T;
+  site_logo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

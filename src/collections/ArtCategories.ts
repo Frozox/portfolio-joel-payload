@@ -54,17 +54,6 @@ export const ArtCategories: CollectionConfig = {
       },
     },
     {
-      name: 'metaDescription',
-      type: 'textarea',
-      localized: true,
-      maxLength: 160,
-    },
-    {
-      name: 'metaKeywords',
-      type: 'text',
-      localized: true,
-    },
-    {
       name: 'art_tag_categories',
       label: 'Art Tag Categories',
       type: 'relationship',

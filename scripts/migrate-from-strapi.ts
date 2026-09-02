@@ -184,6 +184,7 @@ async function run() {
     const created = await payload.create({
       collection: 'art-tag-categories',
       locale: 'fr',
+      draft: false,
       data: {
         name: frDoc.name,
         display_name: frDoc.display_name,
@@ -197,6 +198,7 @@ async function run() {
         collection: 'art-tag-categories',
         id: created.id,
         locale: 'en',
+        draft: false,
         data: {
           name: enDoc.name,
           display_name: enDoc.display_name,
@@ -214,6 +216,7 @@ async function run() {
     const created = await payload.create({
       collection: 'art-tags',
       locale: 'fr',
+      draft: false,
       data: {
         tag: frDoc.tag,
         art_tag_category: frDoc.art_tag_category
@@ -229,6 +232,7 @@ async function run() {
         collection: 'art-tags',
         id: created.id,
         locale: 'en',
+        draft: false,
         data: {
           tag: enDoc.tag,
         },
@@ -248,6 +252,7 @@ async function run() {
     const created = await payload.create({
       collection: 'art-categories',
       locale: 'fr',
+      draft: false,
       data: {
         name: frDoc.name,
         title: frDoc.title,
@@ -255,8 +260,11 @@ async function run() {
         generateSlug: false,
         slug: frDoc.slug,
         image: imageId,
-        metaDescription: frDoc.metaDescription,
-        metaKeywords: frDoc.metaKeywords,
+        meta: {
+          title: frDoc.name,
+          description: frDoc.metaDescription,
+          keywords: frDoc.metaKeywords,
+        },
         art_tag_categories: (frDoc.art_tag_categories || [])
           .map((c: any) => artTagCategoryIdMap.get(c.documentId))
           .filter(Boolean),
@@ -270,13 +278,17 @@ async function run() {
         collection: 'art-categories',
         id: created.id,
         locale: 'en',
+        draft: false,
         data: {
           name: enDoc.name,
           title: enDoc.title,
           generateSlug: false,
           slug: enDoc.slug,
-          metaDescription: enDoc.metaDescription,
-          metaKeywords: enDoc.metaKeywords,
+          meta: {
+            title: enDoc.name,
+            description: enDoc.metaDescription,
+            keywords: enDoc.metaKeywords,
+          },
         },
       })
     }
@@ -286,6 +298,28 @@ async function run() {
   console.log('Migrating arts...')
   const artDocs = await fetchDocsByLocale('arts', ART_POPULATE)
 
+  // Strapi's Media Library folders aren't exposed by the REST API used here,
+  // so they can't be migrated as-is. Instead, we reconstruct one Payload
+  // folder per art-category, containing every media file (thumbnail +
+  // images) used by that category's arts. Media not linked to an art (e.g.
+  // art-category cover images, news media) is left without a folder.
+  const categoryFolderIdMap = new Map<number, number>()
+
+  async function getOrCreateCategoryFolder(categoryId: number, categoryName: string) {
+    const existing = categoryFolderIdMap.get(categoryId)
+    if (existing) return existing
+
+    const folder = await payload.create({
+      collection: 'payload-folders',
+      data: {
+        name: categoryName,
+        folderType: ['media'],
+      },
+    })
+    categoryFolderIdMap.set(categoryId, folder.id)
+    return folder.id
+  }
+
   for (const frDoc of sortByStrapiOrder(artDocs.fr)) {
     const thumbnailId = await migrateMedia(frDoc.thumbnail)
     if (!thumbnailId) throw new Error(`Missing thumbnail for art "${frDoc.name}"`)
@@ -293,9 +327,14 @@ async function run() {
       await Promise.all((frDoc.images || []).map((image: any) => migrateMedia(image)))
     ).filter((id): id is number => Boolean(id))
 
+    const categoryId = frDoc.art_category
+      ? artCategoryIdMap.get(frDoc.art_category.documentId)
+      : undefined
+
     const created = await payload.create({
       collection: 'arts',
       locale: 'fr',
+      draft: false,
       data: {
         name: frDoc.name,
         description: frDoc.description,
@@ -305,9 +344,7 @@ async function run() {
         height: frDoc.height,
         width: frDoc.width,
         depth: frDoc.depth,
-        art_category: frDoc.art_category
-          ? artCategoryIdMap.get(frDoc.art_category.documentId)
-          : undefined,
+        art_category: categoryId,
         art_tags: (frDoc.art_tags || [])
           .map((t: any) => artTagIdMap.get(t.documentId))
           .filter(Boolean),
@@ -315,12 +352,26 @@ async function run() {
       },
     })
 
+    if (categoryId) {
+      const folderId = await getOrCreateCategoryFolder(categoryId, frDoc.art_category.name)
+      await Promise.all(
+        [thumbnailId, ...imageIds].map((mediaId) =>
+          payload.update({
+            collection: 'media',
+            id: mediaId,
+            data: { folder: folderId },
+          }),
+        ),
+      )
+    }
+
     const enDoc = findTranslation(artDocs.en, frDoc.documentId)
     if (enDoc) {
       await payload.update({
         collection: 'arts',
         id: created.id,
         locale: 'en',
+        draft: false,
         data: {
           name: enDoc.name,
           description: enDoc.description,
@@ -385,6 +436,7 @@ async function run() {
   //   await payload.updateGlobal({
   //     slug: 'news',
   //     locale,
+  //     draft: false,
   //     data: {
   //       content: await mapNewsBlocks(newsDoc.content),
   //     },
