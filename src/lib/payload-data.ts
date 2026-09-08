@@ -6,24 +6,29 @@ const getClient = () => getPayload({ config })
 
 /**
  * All queries here are for public-facing frontend pages, so `overrideAccess`
- * is explicitly disabled: Payload's Local API bypasses access control by
+ * defaults to `false`: Payload's Local API bypasses access control by
  * default, and we want the same "published only" behaviour a public REST
  * consumer would get (see `publishedOrAuthenticated`).
+ *
+ * Pass `draft: true` (from Next.js `draftMode()`) to preview unpublished
+ * changes - in that case `overrideAccess` is enabled too, since draft/preview
+ * requests are already gated by the `/next/preview` route's own auth check.
  */
 
-export const getArtCategories = async () => {
+export const getArtCategories = async (draft = false) => {
   const payload = await getClient()
   const { docs } = await payload.find({
     collection: 'art-categories',
     locale: 'fr',
     depth: 1,
     limit: 0,
-    overrideAccess: false,
+    draft,
+    overrideAccess: draft,
   })
   return docs
 }
 
-export const getArtCategoryBySlug = async (slug: string) => {
+export const getArtCategoryBySlug = async (slug: string, draft = false) => {
   const payload = await getClient()
   const { docs } = await payload.find({
     collection: 'art-categories',
@@ -31,12 +36,13 @@ export const getArtCategoryBySlug = async (slug: string) => {
     where: { slug: { equals: slug } },
     depth: 2,
     limit: 1,
-    overrideAccess: false,
+    draft,
+    overrideAccess: draft,
   })
   return docs[0] ?? null
 }
 
-export const getArtsByCategory = async (categoryId: number) => {
+export const getArtsByCategory = async (categoryId: number, draft = false) => {
   const payload = await getClient()
   const { docs } = await payload.find({
     collection: 'arts',
@@ -44,18 +50,20 @@ export const getArtsByCategory = async (categoryId: number) => {
     where: { art_category: { equals: categoryId } },
     depth: 1,
     limit: 0,
-    overrideAccess: false,
+    draft,
+    overrideAccess: draft,
   })
   return docs
 }
 
-export const getNews = async () => {
+export const getNews = async (draft = false) => {
   const payload = await getClient()
   return payload.findGlobal({
     slug: 'news',
     locale: 'fr',
     depth: 1,
-    overrideAccess: false,
+    draft,
+    overrideAccess: draft,
   })
 }
 

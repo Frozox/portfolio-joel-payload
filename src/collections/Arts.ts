@@ -1,7 +1,35 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, PayloadRequest } from 'payload'
 
 import { authenticated } from '../access/authenticated'
 import { publishedOrAuthenticated } from '../access/publishedOrAuthenticated'
+import { generatePreviewPath } from '../lib/generatePreviewPath'
+
+/**
+ * Arts don't have their own page - they're displayed within their category's
+ * `/[categorySlug]` page. To preview an Art, resolve its category's slug
+ * (the `art_category` relationship value is just an id/populated doc
+ * depending on context) and build the preview URL from it.
+ */
+const resolveArtPreviewPath = async (
+  artCategory: unknown,
+  req: PayloadRequest,
+): Promise<string | null> => {
+  const categoryId =
+    typeof artCategory === 'object' && artCategory !== null
+      ? (artCategory as { id?: number }).id
+      : (artCategory as number | undefined)
+
+  if (!categoryId) return null
+
+  const category = await req.payload.findByID({
+    collection: 'art-categories',
+    id: categoryId,
+    depth: 0,
+    overrideAccess: true,
+  })
+
+  return category?.slug ? generatePreviewPath({ path: `/${category.slug}` }) : null
+}
 
 export const Arts: CollectionConfig = {
   slug: 'arts',
@@ -12,6 +40,10 @@ export const Arts: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'art_category', 'sold_out'],
+    preview: (doc, { req }) => resolveArtPreviewPath(doc.art_category, req),
+    livePreview: {
+      url: ({ data, req }) => resolveArtPreviewPath(data?.art_category, req),
+    },
   },
   access: {
     read: publishedOrAuthenticated,

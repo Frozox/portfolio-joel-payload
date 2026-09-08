@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
+import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import type { Product, WithContext } from 'schema-dts'
 
 import { ArtFilter } from '@/components/artFilter/artFilter'
+import LivePreviewListener from '@/components/preview/livePreviewListener'
 import JsonLdLoader from '@/components/seo/jsonLdLoader'
 import { Title } from '@/components/ui/title'
+import { isAdminPreviewRequest } from '@/lib/isAdminPreviewRequest'
 import { resolveMedia } from '@/lib/media'
 import { getArtCategoryBySlug, getArtsByCategory } from '@/lib/payload-data'
 import type { ArtTagCategory } from '@/payload-types'
@@ -17,8 +20,8 @@ interface TLayoutProps {
   }>
 }
 
-const getCurrentArtCategory = async (slug: string) => {
-  const category = await getArtCategoryBySlug(slug)
+const getCurrentArtCategory = async (slug: string, draft = false) => {
+  const category = await getArtCategoryBySlug(slug, draft)
   if (!category) notFound()
   return category
 }
@@ -39,12 +42,14 @@ export const generateMetadata = async ({ params }: TLayoutProps): Promise<Metada
 
 const CategoryLayout = async ({ children, params }: Readonly<TLayoutProps>) => {
   const { categorySlug } = await params
-  const currentArtCategory = await getCurrentArtCategory(categorySlug)
+  const { isEnabled } = await draftMode()
+  const draft = isEnabled && (await isAdminPreviewRequest())
+  const currentArtCategory = await getCurrentArtCategory(categorySlug, draft)
 
   const tagCategories = (currentArtCategory.art_tag_categories ?? []).filter(
     (tagCategory): tagCategory is ArtTagCategory => typeof tagCategory !== 'number',
   )
-  const arts = await getArtsByCategory(currentArtCategory.id)
+  const arts = await getArtsByCategory(currentArtCategory.id, draft)
 
   const image = resolveMedia(currentArtCategory.meta?.image ?? currentArtCategory.image)
 
@@ -58,6 +63,7 @@ const CategoryLayout = async ({ children, params }: Readonly<TLayoutProps>) => {
 
   return (
     <>
+      {draft && <LivePreviewListener />}
       <JsonLdLoader key={currentArtCategory.slug} jsonLd={artCategoryStructuredJsonLd} />
       <ArtFilterProvider arts={arts} tagCategories={tagCategories}>
         <div className="h-11">

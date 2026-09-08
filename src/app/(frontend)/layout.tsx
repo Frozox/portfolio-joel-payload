@@ -1,11 +1,14 @@
 import type { Metadata } from 'next'
+import { draftMode } from 'next/headers'
 import { Lato as FontSans } from 'next/font/google'
 import type { Organization, WithContext } from 'schema-dts'
 
 import Footer from '@/components/nav/footer'
 import MainNav from '@/components/nav/mainNav'
+import LivePreviewListener from '@/components/preview/livePreviewListener'
 import JsonLdLoader from '@/components/seo/jsonLdLoader'
 import { ThemeToggle } from '@/components/theme/themeToggle'
+import { isAdminPreviewRequest } from '@/lib/isAdminPreviewRequest'
 import { resolveMedia } from '@/lib/media'
 import { getArtCategories, getSiteImages } from '@/lib/payload-data'
 import { cn } from '@/lib/utils'
@@ -22,7 +25,7 @@ interface TLayoutProps {
   children: React.ReactNode
 }
 
-export const fontSans = FontSans({
+const fontSans = FontSans({
   weight: '400',
   subsets: ['latin'],
   variable: '--font-sans',
@@ -65,7 +68,9 @@ export const generateMetadata = (): Metadata => {
 }
 
 const RootLayout = async ({ children }: Readonly<TLayoutProps>) => {
-  const artCategories = await getArtCategories()
+  const { isEnabled } = await draftMode()
+  const draft = isEnabled && (await isAdminPreviewRequest())
+  const artCategories = await getArtCategories(draft)
   const siteImages = await getSiteImages()
   const homeJoel = resolveMedia(siteImages.home_joel)
   const siteLogo = resolveMedia(siteImages.site_logo)
@@ -88,6 +93,7 @@ const RootLayout = async ({ children }: Readonly<TLayoutProps>) => {
       className={cn(fontSans.variable, 'scroll-smooth scrollbar-hide')}
     >
       <body className="mx-auto h-screen max-w-[2500px] self-center bg-background align-middle font-sans antialiased">
+        {draft && <LivePreviewListener />}
         <JsonLdLoader key="organization" jsonLd={organizationStructuredJsonLd} />
         <ArtCategoryProvider artCategories={artCategories}>
           <SiteImagesProvider homeJoel={homeJoel} siteLogo={siteLogo}>

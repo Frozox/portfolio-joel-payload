@@ -3,6 +3,7 @@ import { slugField } from 'payload'
 
 import { authenticated } from '../access/authenticated'
 import { publishedOrAuthenticated } from '../access/publishedOrAuthenticated'
+import { generatePreviewPath } from '../lib/generatePreviewPath'
 
 export const ArtCategories: CollectionConfig = {
   slug: 'art-categories',
@@ -13,6 +14,10 @@ export const ArtCategories: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'title'],
+    preview: () => generatePreviewPath({ path: '/' }),
+    livePreview: {
+      url: () => generatePreviewPath({ path: '/' }),
+    },
   },
   access: {
     read: publishedOrAuthenticated,
