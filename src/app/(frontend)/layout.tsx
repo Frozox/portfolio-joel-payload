@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { draftMode } from 'next/headers'
 import { Lato as FontSans } from 'next/font/google'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import type { Organization, WithContext } from 'schema-dts'
 
 import Footer from '@/components/nav/footer'
@@ -20,6 +21,7 @@ import { ThemeProvider } from '@/providers/themeProvider'
 import './styles.css'
 
 const frontendHost = process.env.NEXT_PUBLIC_FRONTEND_HOST ?? 'http://localhost:3000'
+const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
 interface TLayoutProps {
   children: React.ReactNode
@@ -118,6 +120,7 @@ const RootLayout = async ({ children }: Readonly<TLayoutProps>) => {
             </ContactProvider>
           </SiteImagesProvider>
         </ArtCategoryProvider>
+        {gaMeasurementId && <GoogleAnalytics gaId={gaMeasurementId} />}
       </body>
     </html>
   )

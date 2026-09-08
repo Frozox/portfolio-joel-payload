@@ -1,6 +1,8 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { seoPlugin } from '@payloadcms/plugin-seo'
+import { sentryPlugin } from '@payloadcms/plugin-sentry'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import * as Sentry from '@sentry/nextjs'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -74,5 +76,6 @@ export default buildConfig({
           ? `${frontendHost}/${doc.slug}`
           : `${frontendHost}/expositions`,
     }),
+    sentryPlugin({ Sentry, enabled: Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN) }),
   ],
 })
