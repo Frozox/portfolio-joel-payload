@@ -17,6 +17,8 @@ import { ArtTagCategories } from './collections/ArtTagCategories'
 import { ContactSubmissions } from './collections/ContactSubmissions'
 import { News } from './globals/News'
 import { SiteImages } from './globals/SiteImages'
+import { analyticsOverviewEndpoint } from './endpoints/analyticsOverview'
+import { sentryIssuesEndpoint } from './endpoints/sentryIssues'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -29,9 +31,13 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      beforeDashboard: ['/components/admin/DashboardWidgets#DashboardWidgets'],
+    },
   },
   collections: [Users, Media, Arts, ArtCategories, ArtTags, ArtTagCategories, ContactSubmissions],
   globals: [News, SiteImages],
+  endpoints: [analyticsOverviewEndpoint, sentryIssuesEndpoint],
   localization: {
     locales: ['fr', 'en'],
     defaultLocale: 'fr',
