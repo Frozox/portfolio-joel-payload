@@ -56,6 +56,30 @@ export const getArtsByCategory = async (categoryId: number, draft = false) => {
   return docs
 }
 
+/**
+ * `ArtTagCategory.art_tags` is a `join` field, and Payload only resolves a
+ * nested doc's own `join` fields when that doc is the collection being
+ * queried directly - not when it's reached through another relationship
+ * (e.g. via `ArtCategory.art_tag_categories`), regardless of `depth`. So we
+ * fetch tag categories here as their own top-level query instead of reading
+ * them off the already-populated `art-categories` doc.
+ */
+export const getArtTagCategoriesByIds = async (ids: number[], draft = false) => {
+  if (ids.length === 0) return []
+
+  const payload = await getClient()
+  const { docs } = await payload.find({
+    collection: 'art-tag-categories',
+    locale: 'fr',
+    where: { id: { in: ids } },
+    depth: 2,
+    limit: 0,
+    draft,
+    overrideAccess: draft,
+  })
+  return docs
+}
+
 export const getNews = async (draft = false) => {
   const payload = await getClient()
   return payload.findGlobal({

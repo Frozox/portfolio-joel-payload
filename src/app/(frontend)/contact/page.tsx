@@ -177,11 +177,11 @@ const ContactPage = () => {
             })
             return (
               <FormItem className="col-span-2">
-                <FormLabel className="relative">
+                <FormLabel className="inline-flex items-center gap-1.5">
                   <span>œuvres enregistrées</span>
                   <TooltipProvider>
                     <Tooltip delayDuration={0}>
-                      <TooltipTrigger asChild className="absolute -right-5 -top-1">
+                      <TooltipTrigger asChild>
                         <button type="button">
                           <Info className="size-4" />
                         </button>

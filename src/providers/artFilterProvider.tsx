@@ -17,8 +17,6 @@ interface TArtFilterContext {
   paginatedArts: Art[]
   selectedTagIds: number[]
   toggleTag: (tagId: number) => void
-  /** Replaces the whole selection with a single tag (used from the carousel). */
-  selectOnlyTag: (tagId: number) => void
   clearFilters: () => void
   page: number
   pageSize: number
@@ -33,7 +31,6 @@ const ArtFilterContext = createContext<TArtFilterContext>({
   paginatedArts: [],
   selectedTagIds: [],
   toggleTag: () => {},
-  selectOnlyTag: () => {},
   clearFilters: () => {},
   page: 1,
   pageSize: ART_PAGE_SIZE,
@@ -93,16 +90,16 @@ export const ArtFilterProvider = ({ children, arts, tagCategories }: TArtFilterP
   const pageCount = Math.max(1, Math.ceil(filteredArts.length / ART_PAGE_SIZE))
   const paginatedArts = filteredArts.slice((page - 1) * ART_PAGE_SIZE, page * ART_PAGE_SIZE)
 
+  /**
+   * Toggles a single tag in/out of the selection without touching the
+   * others - also used from the carousel's tag labels, matching prod's
+   * behaviour of accumulating tags instead of replacing the selection.
+   */
   const toggleTag = (tagId: number) => {
     setPage(1)
     setSelectedTagIds((prev) =>
       prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId],
     )
-  }
-
-  const selectOnlyTag = (tagId: number) => {
-    setPage(1)
-    setSelectedTagIds([tagId])
   }
 
   const clearFilters = () => {
@@ -119,7 +116,6 @@ export const ArtFilterProvider = ({ children, arts, tagCategories }: TArtFilterP
         paginatedArts,
         selectedTagIds,
         toggleTag,
-        selectOnlyTag,
         clearFilters,
         page,
         pageSize: ART_PAGE_SIZE,

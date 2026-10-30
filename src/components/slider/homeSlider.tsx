@@ -27,15 +27,13 @@ const HomeSlider = () => {
           <DirectionAwareHover imageUrl={image?.url ?? ''}>
             <div className="m-4">
               <p className="pb-10 text-5xl md:text-6xl">{item.name}</p>
-              <Link href={`/${item.slug}`}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-fit border-white bg-transparent p-6 text-xl hover:bg-background md:min-w-60 md:text-2xl"
-                >
-                  Voir les travaux
-                </Button>
-              </Link>
+              <Button
+                asChild
+                variant="outline"
+                className="w-fit border-white bg-transparent p-6 text-xl hover:bg-background md:min-w-60 md:text-2xl"
+              >
+                <Link href={`/${item.slug}`}>Voir les travaux</Link>
+              </Button>
             </div>
           </DirectionAwareHover>
         ),

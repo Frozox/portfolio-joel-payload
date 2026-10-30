@@ -36,10 +36,22 @@ PaginationItem.displayName = 'PaginationItem'
 type PaginationLinkProps = {
   isActive?: boolean
 } & Pick<ButtonProps, 'size'> &
-  React.ComponentProps<'a'>
+  React.ComponentProps<'button'>
 
-const PaginationLink = ({ className, isActive, size = 'icon', ...props }: PaginationLinkProps) => (
-  <a
+// Rendered as a real <button> (not <a>, there's no href/navigation involved):
+// this is used purely as a client-side pager control, and nesting an <a>
+// inside/around the plain <button>s in artFilter.tsx produced invalid,
+// interactive-in-interactive HTML that React flagged with hydration
+// mismatches.
+const PaginationLink = ({
+  className,
+  isActive,
+  size = 'icon',
+  type = 'button',
+  ...props
+}: PaginationLinkProps) => (
+  <button
+    type={type}
     aria-current={isActive ? 'page' : undefined}
     className={cn(
       buttonVariants({

@@ -90,7 +90,7 @@ export const ArtCarousselSlider = ({ ...props }: TArtCarousselSlider) => {
 }
 
 export const ArtCaroussel = () => {
-  const { paginatedArts, selectOnlyTag } = useArtFilter()
+  const { paginatedArts, toggleTag } = useArtFilter()
   const { sliderInstance, setSlides, slides: keenSlides } = useKeenSlider()
   const { savedArts, toggleSavedArt } = useContact()
 
@@ -151,7 +151,7 @@ export const ArtCaroussel = () => {
                         className="mr-2 inline-block cursor-pointer truncate text-foreground underline decoration-2 underline-offset-4 hover:underline-offset-2"
                         key={tag.id}
                         onClick={() => {
-                          selectOnlyTag(tag.id)
+                          toggleTag(tag.id)
                         }}
                       >
                         {tag.tag}
@@ -198,7 +198,7 @@ export const ArtCaroussel = () => {
       ),
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artItems, savedArts, toggleSavedArt, selectOnlyTag])
+  }, [artItems, savedArts, toggleSavedArt, toggleTag])
 
   useEffect(() => {
     setSlides(slides)

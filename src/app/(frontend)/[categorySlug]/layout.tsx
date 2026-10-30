@@ -9,8 +9,11 @@ import JsonLdLoader from '@/components/seo/jsonLdLoader'
 import { Title } from '@/components/ui/title'
 import { isAdminPreviewRequest } from '@/lib/isAdminPreviewRequest'
 import { resolveMedia } from '@/lib/media'
-import { getArtCategoryBySlug, getArtsByCategory } from '@/lib/payload-data'
-import type { ArtTagCategory } from '@/payload-types'
+import {
+  getArtCategoryBySlug,
+  getArtsByCategory,
+  getArtTagCategoriesByIds,
+} from '@/lib/payload-data'
 import { ArtFilterProvider } from '@/providers/artFilterProvider'
 
 interface TLayoutProps {
@@ -46,9 +49,10 @@ const CategoryLayout = async ({ children, params }: Readonly<TLayoutProps>) => {
   const draft = isEnabled && (await isAdminPreviewRequest())
   const currentArtCategory = await getCurrentArtCategory(categorySlug, draft)
 
-  const tagCategories = (currentArtCategory.art_tag_categories ?? []).filter(
-    (tagCategory): tagCategory is ArtTagCategory => typeof tagCategory !== 'number',
+  const tagCategoryIds = (currentArtCategory.art_tag_categories ?? []).map((tagCategory) =>
+    typeof tagCategory === 'number' ? tagCategory : tagCategory.id,
   )
+  const tagCategories = await getArtTagCategoriesByIds(tagCategoryIds, draft)
   const arts = await getArtsByCategory(currentArtCategory.id, draft)
 
   const image = resolveMedia(currentArtCategory.meta?.image ?? currentArtCategory.image)

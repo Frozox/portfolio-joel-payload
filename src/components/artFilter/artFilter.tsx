@@ -100,29 +100,23 @@ export const ArtFilterPagination = ({ className }: { className: string }) => {
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <button
-              type="button"
+            <PaginationPrevious
               onClick={() => setPage(page - 1)}
               disabled={page <= 1}
               className={cn(page <= 1 && 'opacity-50')}
-            >
-              <PaginationPrevious />
-            </button>
+            />
           </PaginationItem>
           {Array.from({ length: 3 }).map((_, i) => (
             <React.Fragment key={i}>
               {(i === 0 && (
                 <>
                   <PaginationItem>
-                    <PaginationLink isActive={page <= 1}>
-                      <button
-                        type="button"
-                        onClick={() => setPage(1)}
-                        disabled={page === 1}
-                        className="size-full"
-                      >
-                        1
-                      </button>
+                    <PaginationLink
+                      isActive={page <= 1}
+                      onClick={() => setPage(1)}
+                      disabled={page === 1}
+                    >
+                      1
                     </PaginationLink>
                   </PaginationItem>
                   {page > 3 && pageCount !== 4 && (
@@ -140,15 +134,12 @@ export const ArtFilterPagination = ({ className }: { className: string }) => {
                       </PaginationItem>
                     )}
                     <PaginationItem>
-                      <PaginationLink isActive={page >= pageCount}>
-                        <button
-                          type="button"
-                          onClick={() => setPage(pageCount)}
-                          disabled={page === pageCount}
-                          className="size-full"
-                        >
-                          {pageCount}
-                        </button>
+                      <PaginationLink
+                        isActive={page >= pageCount}
+                        onClick={() => setPage(pageCount)}
+                        disabled={page === pageCount}
+                      >
+                        {pageCount}
                       </PaginationLink>
                     </PaginationItem>
                   </>
@@ -161,15 +152,12 @@ export const ArtFilterPagination = ({ className }: { className: string }) => {
                       return (
                         <React.Fragment key={j}>
                           <PaginationItem>
-                            <PaginationLink isActive={page === targetPage}>
-                              <button
-                                type="button"
-                                onClick={() => setPage(targetPage)}
-                                disabled={page === targetPage}
-                                className="size-full"
-                              >
-                                {targetPage}
-                              </button>
+                            <PaginationLink
+                              isActive={page === targetPage}
+                              onClick={() => setPage(targetPage)}
+                              disabled={page === targetPage}
+                            >
+                              {targetPage}
                             </PaginationLink>
                           </PaginationItem>
                         </React.Fragment>
@@ -180,14 +168,11 @@ export const ArtFilterPagination = ({ className }: { className: string }) => {
             </React.Fragment>
           ))}
           <PaginationItem>
-            <button
-              type="button"
+            <PaginationNext
               onClick={() => setPage(page + 1)}
               disabled={page >= pageCount}
               className={cn(page >= pageCount && 'opacity-50')}
-            >
-              <PaginationNext />
-            </button>
+            />
           </PaginationItem>
         </PaginationContent>
       </Pagination>
