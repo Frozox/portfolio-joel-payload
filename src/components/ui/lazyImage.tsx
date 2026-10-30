@@ -12,6 +12,8 @@ export type LazyImageProps = HTMLAttributes<HTMLImageElement> & {
   width: number
   height: number
   fullSize?: boolean
+  /** Marks this image as the LCP candidate: skips lazy-loading and preloads it. */
+  priority?: boolean
   alt: string
 }
 
@@ -21,7 +23,16 @@ export type LazyImageProps = HTMLAttributes<HTMLImageElement> & {
  * this backend), so the placeholder logic has been removed and we just fade
  * the real image in once it's loaded.
  */
-const LazyImage = ({ src, className, alt, width, height, fullSize, ...props }: LazyImageProps) => {
+const LazyImage = ({
+  src,
+  className,
+  alt,
+  width,
+  height,
+  fullSize,
+  priority,
+  ...props
+}: LazyImageProps) => {
   const [isImageLoaded, setIsImageLoaded] = useState(false)
 
   const onLoaded = () => {
@@ -42,6 +53,7 @@ const LazyImage = ({ src, className, alt, width, height, fullSize, ...props }: L
             height={height}
             width={width}
             alt={alt}
+            priority={priority}
             onLoad={onLoaded}
             className={cn(className, 'pointer-events-auto')}
             {...props}

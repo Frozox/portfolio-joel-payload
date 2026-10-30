@@ -19,12 +19,12 @@ const HomeSlider = () => {
   const slides = useMemo<TKeenSlideProps[]>(() => {
     if (artCategories.length === 0) return []
 
-    return artCategories.map((item) => {
+    return artCategories.map((item, index) => {
       const image = resolveMedia(item.image)
 
       return {
         children: (
-          <DirectionAwareHover imageUrl={image?.url ?? ''}>
+          <DirectionAwareHover imageUrl={image?.url ?? ''} priority={index === 0}>
             <div className="m-4">
               <p className="pb-10 text-5xl md:text-6xl">{item.name}</p>
               <Button

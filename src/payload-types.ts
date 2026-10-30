@@ -73,7 +73,6 @@ export interface Config {
     'art-categories': ArtCategory;
     'art-tags': ArtTag;
     'art-tag-categories': ArtTagCategory;
-    'contact-submissions': ContactSubmission;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -102,7 +101,6 @@ export interface Config {
     'art-categories': ArtCategoriesSelect<false> | ArtCategoriesSelect<true>;
     'art-tags': ArtTagsSelect<false> | ArtTagsSelect<true>;
     'art-tag-categories': ArtTagCategoriesSelect<false> | ArtTagCategoriesSelect<true>;
-    'contact-submissions': ContactSubmissionsSelect<false> | ContactSubmissionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -162,6 +160,7 @@ export interface User {
   resetPasswordExpiration?: string | null;
   salt?: string | null;
   hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
   sessions?:
@@ -353,19 +352,6 @@ export interface ArtTag {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "contact-submissions".
- */
-export interface ContactSubmission {
-  id: number;
-  fullname: string;
-  email: string;
-  message: string;
-  arts?: (number | Art)[] | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -411,10 +397,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'art-tag-categories';
         value: number | ArtTagCategory;
-      } | null)
-    | ({
-        relationTo: 'contact-submissions';
-        value: number | ContactSubmission;
       } | null)
     | ({
         relationTo: 'payload-folders';
@@ -474,6 +456,7 @@ export interface UsersSelect<T extends boolean = true> {
   resetPasswordExpiration?: T;
   salt?: T;
   hash?: T;
+  resetPasswordRequestedAt?: T;
   loginAttempts?: T;
   lockUntil?: T;
   sessions?:
@@ -619,18 +602,6 @@ export interface ArtTagCategoriesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "contact-submissions_select".
- */
-export interface ContactSubmissionsSelect<T extends boolean = true> {
-  fullname?: T;
-  email?: T;
-  message?: T;
-  arts?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

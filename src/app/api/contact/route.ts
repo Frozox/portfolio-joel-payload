@@ -1,6 +1,11 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import {
+  buildAdminNotificationEmail,
+  buildContactConfirmationEmail,
+} from '@/lib/email/contactEmailTemplates'
+import { resolveMedia } from '@/lib/media'
 import { ContactFormSchema } from '@/lib/schemas/contactForm'
 
 const verifyHCaptcha = async (token: string | undefined) => {
@@ -34,18 +39,52 @@ export const POST = async (request: Request) => {
   }
 
   const payload = await getPayload({ config: configPromise })
+  const frontendHost = process.env.NEXT_PUBLIC_FRONTEND_HOST || ''
 
   try {
-    await payload.create({
-      collection: 'contact-submissions',
-      data: {
-        fullname: parsed.data.fullname,
-        email: parsed.data.email,
-        message: parsed.data.message,
-        arts: parsed.data.arts,
-      },
-    })
-  } catch {
+    const { docs: arts } = parsed.data.arts.length
+      ? await payload.find({
+          collection: 'arts',
+          locale: 'fr',
+          where: {
+            id: { in: parsed.data.arts },
+            sold_out: { equals: false },
+          },
+          depth: 1,
+          limit: 0,
+        })
+      : { docs: [] }
+
+    const emailData = {
+      fullname: parsed.data.fullname,
+      email: parsed.data.email,
+      message: parsed.data.message,
+      arts: arts.map((art) => {
+        const thumbnail = resolveMedia(art.thumbnail)
+        return {
+          name: art.name,
+          thumbnailUrl: thumbnail ? `${frontendHost}${thumbnail.url}` : null,
+        }
+      }),
+    }
+
+    const admin = buildAdminNotificationEmail(emailData)
+    const confirmation = buildContactConfirmationEmail(emailData)
+
+    await Promise.all([
+      payload.sendEmail({
+        to: process.env.EMAIL_FROM,
+        subject: admin.subject,
+        html: admin.html,
+      }),
+      payload.sendEmail({
+        to: parsed.data.email,
+        subject: confirmation.subject,
+        html: confirmation.html,
+      }),
+    ])
+  } catch (error) {
+    console.error(error)
     return Response.json(
       { error: { message: "Erreur lors de l'envoi du message." } },
       { status: 500 },

@@ -1,4 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { seoPlugin } from '@payloadcms/plugin-seo'
 import { sentryPlugin } from '@payloadcms/plugin-sentry'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
@@ -14,7 +15,6 @@ import { Arts } from './collections/Arts'
 import { ArtCategories } from './collections/ArtCategories'
 import { ArtTags } from './collections/ArtTags'
 import { ArtTagCategories } from './collections/ArtTagCategories'
-import { ContactSubmissions } from './collections/ContactSubmissions'
 import { News } from './globals/News'
 import { SiteImages } from './globals/SiteImages'
 import { analyticsOverviewEndpoint } from './endpoints/analyticsOverview'
@@ -35,7 +35,7 @@ export default buildConfig({
       beforeDashboard: ['/components/admin/DashboardWidgets#DashboardWidgets'],
     },
   },
-  collections: [Users, Media, Arts, ArtCategories, ArtTags, ArtTagCategories, ContactSubmissions],
+  collections: [Users, Media, Arts, ArtCategories, ArtTags, ArtTagCategories],
   globals: [News, SiteImages],
   endpoints: [analyticsOverviewEndpoint, sentryIssuesEndpoint],
   localization: {
@@ -51,6 +51,19 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL || '',
+    },
+  }),
+  email: nodemailerAdapter({
+    defaultFromAddress: process.env.EMAIL_FROM || 'no-reply@joel-chapeau.fr',
+    defaultFromName: 'Joël Chapeau',
+    transportOptions: {
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : 465,
+      secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
     },
   }),
   sharp,
