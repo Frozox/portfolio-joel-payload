@@ -1,10 +1,13 @@
 import type { GlobalConfig } from 'payload'
 
+import { globalPermission } from '../access/globalPermission'
+
 export const SiteImages: GlobalConfig = {
   slug: 'site-images',
   label: 'Images statiques',
   access: {
     read: () => true,
+    update: globalPermission('site-images', 'update'),
   },
   fields: [
     {

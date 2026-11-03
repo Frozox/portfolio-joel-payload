@@ -2,11 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import {
-  Bar,
-  BarChart,
+  Area,
+  AreaChart,
   CartesianGrid,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -18,26 +16,21 @@ type TimeseriesPoint = { label: string; activeUsers: number }
 type AnalyticsOverview = {
   configured: boolean
   error?: string
+  pending?: boolean
+  fetchedAt?: string
+  stale?: boolean
   totals?: {
     activeUsers: number
     newUsers: number
-    sessions: number
     pageViews: number
-    engagedSessions: number
-    bounceRate: number
-    engagementRate: number
-    averageSessionDuration: number
   }
   timeseries?: {
     daily: TimeseriesPoint[]
     weekly: TimeseriesPoint[]
     monthly: TimeseriesPoint[]
   }
-  topPages?: { path: string; views: number }[]
-  trafficSources?: { source: string; sessions: number }[]
-  devices?: { device: string; sessions: number }[]
-  countries?: { country: string; activeUsers: number }[]
-  newVsReturning?: { segment: string; activeUsers: number }[]
+  topPages?: { title: string; views: number }[]
+  newVsReturning?: { newUsers: number; returningUsers: number }
 }
 
 const PERIOD_TABS = [
@@ -48,25 +41,29 @@ const PERIOD_TABS = [
 
 type PeriodKey = (typeof PERIOD_TABS)[number]['key']
 
-const formatPercent = (ratio: number): string => `${(ratio * 100).toFixed(1)}%`
-
-const formatDuration = (seconds: number): string => {
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = Math.round(seconds % 60)
-  return `${minutes}m ${remainingSeconds.toString().padStart(2, '0')}s`
-}
+const formatFetchedAt = (value: string): string =>
+  new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' }).format(
+    new Date(value),
+  )
 
 export const AnalyticsWidget = () => {
   const [data, setData] = useState<AnalyticsOverview | null>(null)
   const [loading, setLoading] = useState(true)
+  const [forbidden, setForbidden] = useState(false)
   const [period, setPeriod] = useState<PeriodKey>('daily')
 
   useEffect(() => {
     const controller = new AbortController()
 
     fetch('/api/analytics-overview', { signal: controller.signal })
-      .then((res) => res.json())
-      .then(setData)
+      .then((res) => {
+        if (res.status === 403) {
+          setForbidden(true)
+          return null
+        }
+        return res.json()
+      })
+      .then((json) => json && setData(json))
       .catch(() => setData({ configured: false, error: 'Erreur de chargement' }))
       .finally(() => setLoading(false))
 
@@ -75,9 +72,20 @@ export const AnalyticsWidget = () => {
 
   const chartData = useMemo(() => data?.timeseries?.[period] ?? [], [data, period])
 
+  const newUsers = data?.newVsReturning?.newUsers ?? 0
+  const returningUsers = data?.newVsReturning?.returningUsers ?? 0
+  const newVsReturningTotal = newUsers + returningUsers
+  const newUsersPercent =
+    newVsReturningTotal > 0 ? Math.round((newUsers / newVsReturningTotal) * 100) : 0
+
+  const topPages = data?.topPages ?? []
+  const maxPageViews = Math.max(...topPages.map((page) => page.views), 1)
+
+  if (forbidden) return null
+
   return (
     <div className="dashboard-widget dashboard-widget--wide">
-      <h3 className="dashboard-widget__title">Google Analytics — 30 derniers jours</h3>
+      <h3 className="dashboard-widget__title">Visiteurs du site</h3>
 
       {loading && <p className="dashboard-widget__muted">Chargement…</p>}
 
@@ -88,38 +96,28 @@ export const AnalyticsWidget = () => {
         </p>
       )}
 
-      {!loading && data?.error && <p className="dashboard-widget__error">{data.error}</p>}
+      {!loading && data?.pending && (
+        <p className="dashboard-widget__muted">{data.error ?? 'Synchronisation en cours…'}</p>
+      )}
+
+      {!loading && data?.error && !data.pending && (
+        <p className="dashboard-widget__error">{data.error}</p>
+      )}
 
       {!loading && data?.configured && !data.error && (
         <>
           <div className="dashboard-widget__stats">
-            <div className="dashboard-widget__stat">
+            <div className="dashboard-widget__stat dashboard-widget__stat--primary">
               <strong>{data.totals?.activeUsers ?? 0}</strong>
-              <span>Utilisateurs actifs</span>
+              <span>Visiteurs (30 derniers jours)</span>
             </div>
             <div className="dashboard-widget__stat">
               <strong>{data.totals?.newUsers ?? 0}</strong>
-              <span>Nouveaux utilisateurs</span>
-            </div>
-            <div className="dashboard-widget__stat">
-              <strong>{data.totals?.sessions ?? 0}</strong>
-              <span>Sessions</span>
+              <span>Nouveaux visiteurs</span>
             </div>
             <div className="dashboard-widget__stat">
               <strong>{data.totals?.pageViews ?? 0}</strong>
               <span>Pages vues</span>
-            </div>
-            <div className="dashboard-widget__stat">
-              <strong>{formatPercent(data.totals?.engagementRate ?? 0)}</strong>
-              <span>Taux d&apos;engagement</span>
-            </div>
-            <div className="dashboard-widget__stat">
-              <strong>{formatPercent(data.totals?.bounceRate ?? 0)}</strong>
-              <span>Taux de rebond</span>
-            </div>
-            <div className="dashboard-widget__stat">
-              <strong>{formatDuration(data.totals?.averageSessionDuration ?? 0)}</strong>
-              <span>Durée moy. session</span>
             </div>
           </div>
 
@@ -142,113 +140,103 @@ export const AnalyticsWidget = () => {
 
           <div className="dashboard-widget__chart">
             <ResponsiveContainer width="100%" height={220}>
-              {period === 'daily' ? (
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-elevation-150)" />
-                  <XAxis dataKey="label" fontSize={11} />
-                  <YAxis fontSize={11} allowDecimals={false} />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="activeUsers"
-                    name="Utilisateurs actifs"
-                    stroke="var(--theme-success-500, #22c55e)"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              ) : (
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--theme-elevation-150)" />
-                  <XAxis dataKey="label" fontSize={11} />
-                  <YAxis fontSize={11} allowDecimals={false} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="activeUsers"
-                    name="Utilisateurs actifs"
-                    fill="var(--theme-success-500, #22c55e)"
-                  />
-                </BarChart>
-              )}
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="visitorsGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop
+                      offset="0%"
+                      stopColor="var(--theme-success-500, #22c55e)"
+                      stopOpacity={0.35}
+                    />
+                    <stop
+                      offset="100%"
+                      stopColor="var(--theme-success-500, #22c55e)"
+                      stopOpacity={0}
+                    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--theme-elevation-150)"
+                  vertical={false}
+                />
+                <XAxis dataKey="label" fontSize={11} />
+                <YAxis fontSize={11} allowDecimals={false} width={32} />
+                <Tooltip formatter={(value: number) => [value, 'Visiteurs']} />
+                <Area
+                  type="monotone"
+                  dataKey="activeUsers"
+                  name="Visiteurs"
+                  stroke="var(--theme-success-500, #22c55e)"
+                  strokeWidth={2}
+                  fill="url(#visitorsGradient)"
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
 
           <div className="dashboard-widget__columns">
             <div>
               <h4>Pages les plus consultées</h4>
-              <ul className="dashboard-widget__list">
-                {(data.topPages ?? []).length === 0 && (
-                  <li className="dashboard-widget__muted">Aucune donnée</li>
-                )}
-                {(data.topPages ?? []).map((page) => (
-                  <li key={page.path}>
-                    <span>{page.path}</span>
-                    <span>{page.views}</span>
-                  </li>
-                ))}
-              </ul>
+              {topPages.length === 0 ? (
+                <p className="dashboard-widget__muted">Aucune donnée</p>
+              ) : (
+                <ul className="dashboard-widget__list dashboard-widget__list--bars">
+                  {topPages.map((page) => (
+                    <li key={page.title}>
+                      <div className="dashboard-widget__bar-row">
+                        <span>{page.title}</span>
+                        <span>{page.views}</span>
+                      </div>
+                      <div className="dashboard-widget__bar-track">
+                        <div
+                          className="dashboard-widget__bar-fill"
+                          style={{ width: `${(page.views / maxPageViews) * 100}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div>
-              <h4>Sources de trafic</h4>
-              <ul className="dashboard-widget__list">
-                {(data.trafficSources ?? []).length === 0 && (
-                  <li className="dashboard-widget__muted">Aucune donnée</li>
-                )}
-                {(data.trafficSources ?? []).map((source) => (
-                  <li key={source.source}>
-                    <span>{source.source}</span>
-                    <span>{source.sessions}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4>Appareils</h4>
-              <ul className="dashboard-widget__list">
-                {(data.devices ?? []).length === 0 && (
-                  <li className="dashboard-widget__muted">Aucune donnée</li>
-                )}
-                {(data.devices ?? []).map((device) => (
-                  <li key={device.device}>
-                    <span>{device.device}</span>
-                    <span>{device.sessions}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4>Pays</h4>
-              <ul className="dashboard-widget__list">
-                {(data.countries ?? []).length === 0 && (
-                  <li className="dashboard-widget__muted">Aucune donnée</li>
-                )}
-                {(data.countries ?? []).map((country) => (
-                  <li key={country.country}>
-                    <span>{country.country}</span>
-                    <span>{country.activeUsers}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h4>Nouveaux vs récurrents</h4>
-              <ul className="dashboard-widget__list">
-                {(data.newVsReturning ?? []).length === 0 && (
-                  <li className="dashboard-widget__muted">Aucune donnée</li>
-                )}
-                {(data.newVsReturning ?? []).map((segment) => (
-                  <li key={segment.segment}>
-                    <span>{segment.segment}</span>
-                    <span>{segment.activeUsers}</span>
-                  </li>
-                ))}
-              </ul>
+              <h4>Nouveaux vs visiteurs qui reviennent</h4>
+              {newVsReturningTotal === 0 ? (
+                <p className="dashboard-widget__muted">Aucune donnée</p>
+              ) : (
+                <>
+                  <p className="dashboard-widget__muted">
+                    <strong>{newUsersPercent}%</strong> de vos visiteurs sont nouveaux
+                  </p>
+                  <div className="dashboard-widget__bar-track">
+                    <div
+                      className="dashboard-widget__bar-fill"
+                      style={{ width: `${newUsersPercent}%` }}
+                    />
+                  </div>
+                  <ul className="dashboard-widget__list">
+                    <li>
+                      <span>Nouveaux</span>
+                      <span>{newUsers}</span>
+                    </li>
+                    <li>
+                      <span>Visiteurs qui reviennent</span>
+                      <span>{returningUsers}</span>
+                    </li>
+                  </ul>
+                </>
+              )}
             </div>
           </div>
+
+          {data.fetchedAt && (
+            <p className="dashboard-widget__muted" style={{ marginTop: 12, fontSize: 11 }}>
+              Dernière mise à jour : {formatFetchedAt(data.fetchedAt)}
+              {data.stale && ' — synchronisation en échec, anciennes données affichées'}. Ces
+              chiffres peuvent avoir jusqu&apos;à 24-48h de retard (délai de traitement Google).
+            </p>
+          )}
         </>
       )}
     </div>

@@ -7,6 +7,9 @@ export async function register() {
       tracesSampleRate: 1,
       debug: false,
     })
+
+    const { startAnalyticsPoller } = await import('./instrumentation-node')
+    startAnalyticsPoller()
   }
 
   if (process.env.NEXT_RUNTIME === 'edge') {

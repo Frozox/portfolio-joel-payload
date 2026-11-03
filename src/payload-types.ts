@@ -73,6 +73,7 @@ export interface Config {
     'art-categories': ArtCategory;
     'art-tags': ArtTag;
     'art-tag-categories': ArtTagCategory;
+    roles: Role;
     'payload-kv': PayloadKv;
     'payload-folders': FolderInterface;
     'payload-locked-documents': PayloadLockedDocument;
@@ -101,6 +102,7 @@ export interface Config {
     'art-categories': ArtCategoriesSelect<false> | ArtCategoriesSelect<true>;
     'art-tags': ArtTagsSelect<false> | ArtTagsSelect<true>;
     'art-tag-categories': ArtTagCategoriesSelect<false> | ArtTagCategoriesSelect<true>;
+    roles: RolesSelect<false> | RolesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-folders': PayloadFoldersSelect<false> | PayloadFoldersSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -114,10 +116,12 @@ export interface Config {
   globals: {
     news: News;
     'site-images': SiteImage;
+    'analytics-cache': AnalyticsCache;
   };
   globalsSelect: {
     news: NewsSelect<false> | NewsSelect<true>;
     'site-images': SiteImagesSelect<false> | SiteImagesSelect<true>;
+    'analytics-cache': AnalyticsCacheSelect<false> | AnalyticsCacheSelect<true>;
   };
   locale: 'fr' | 'en';
   widgets: {
@@ -153,6 +157,7 @@ export interface UserAuthOperations {
  */
 export interface User {
   id: number;
+  role?: (number | null) | Role;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -172,6 +177,37 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "roles".
+ */
+export interface Role {
+  id: number;
+  name: string;
+  isAdmin?: boolean | null;
+  collections?:
+    | {
+        collection: 'users' | 'arts' | 'art-categories' | 'art-tags' | 'art-tag-categories' | 'media';
+        read?: boolean | null;
+        create?: boolean | null;
+        update?: boolean | null;
+        delete?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  globals?:
+    | {
+        global: 'news' | 'site-images';
+        read?: boolean | null;
+        update?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  viewAnalytics?: boolean | null;
+  viewSentry?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -399,6 +435,10 @@ export interface PayloadLockedDocument {
         value: number | ArtTagCategory;
       } | null)
     | ({
+        relationTo: 'roles';
+        value: number | Role;
+      } | null)
+    | ({
         relationTo: 'payload-folders';
         value: number | FolderInterface;
       } | null);
@@ -449,6 +489,7 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -602,6 +643,36 @@ export interface ArtTagCategoriesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "roles_select".
+ */
+export interface RolesSelect<T extends boolean = true> {
+  name?: T;
+  isAdmin?: T;
+  collections?:
+    | T
+    | {
+        collection?: T;
+        read?: T;
+        create?: T;
+        update?: T;
+        delete?: T;
+        id?: T;
+      };
+  globals?:
+    | T
+    | {
+        global?: T;
+        read?: T;
+        update?: T;
+        id?: T;
+      };
+  viewAnalytics?: T;
+  viewSentry?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -761,6 +832,27 @@ export interface SiteImage {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics-cache".
+ */
+export interface AnalyticsCache {
+  id: number;
+  data?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  fetchedAt?: string | null;
+  lastError?: string | null;
+  lastErrorAt?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "news_select".
  */
 export interface NewsSelect<T extends boolean = true> {
@@ -833,6 +925,19 @@ export interface SpacerBlockSelect<T extends boolean = true> {
 export interface SiteImagesSelect<T extends boolean = true> {
   home_joel?: T;
   site_logo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics-cache_select".
+ */
+export interface AnalyticsCacheSelect<T extends boolean = true> {
+  data?: T;
+  fetchedAt?: T;
+  lastError?: T;
+  lastErrorAt?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -112,3 +112,35 @@
 .dashboard-widget__list--sentry a {
   font-weight: 500;
 }
+
+.dashboard-widget__stat--primary strong {
+  font-size: 2rem;
+}
+
+.dashboard-widget__bar-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-widget__bar-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--theme-elevation-100);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-widget__bar-fill {
+  height: 100%;
+  background: var(--theme-success-500, #22c55e);
+  border-radius: 3px;
+}
+
+.dashboard-widget__list--bars li {
+  display: block;
+  border-bottom: none;
+  padding: 0.35rem 0;
+}
+

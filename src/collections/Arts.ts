@@ -1,7 +1,7 @@
 import type { CollectionConfig, PayloadRequest } from 'payload'
 
-import { authenticated } from '../access/authenticated'
-import { publishedOrAuthenticated } from '../access/publishedOrAuthenticated'
+import { collectionPermission } from '../access/collectionPermission'
+import { publishedOrCollectionRead } from '../access/publishedOrCollectionRead'
 import { generatePreviewPath } from '../lib/generatePreviewPath'
 
 /**
@@ -46,10 +46,10 @@ export const Arts: CollectionConfig = {
     },
   },
   access: {
-    read: publishedOrAuthenticated,
-    create: authenticated,
-    update: authenticated,
-    delete: authenticated,
+    read: publishedOrCollectionRead('arts'),
+    create: collectionPermission('arts', 'create'),
+    update: collectionPermission('arts', 'update'),
+    delete: collectionPermission('arts', 'delete'),
   },
   versions: {
     drafts: true,

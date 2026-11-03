@@ -1,8 +1,8 @@
 import type { CollectionConfig } from 'payload'
 import { slugField } from 'payload'
 
-import { authenticated } from '../access/authenticated'
-import { publishedOrAuthenticated } from '../access/publishedOrAuthenticated'
+import { collectionPermission } from '../access/collectionPermission'
+import { publishedOrCollectionRead } from '../access/publishedOrCollectionRead'
 import { generatePreviewPath } from '../lib/generatePreviewPath'
 
 export const ArtCategories: CollectionConfig = {
@@ -20,10 +20,10 @@ export const ArtCategories: CollectionConfig = {
     },
   },
   access: {
-    read: publishedOrAuthenticated,
-    create: authenticated,
-    update: authenticated,
-    delete: authenticated,
+    read: publishedOrCollectionRead('art-categories'),
+    create: collectionPermission('art-categories', 'create'),
+    update: collectionPermission('art-categories', 'update'),
+    delete: collectionPermission('art-categories', 'delete'),
   },
   versions: {
     drafts: true,

@@ -15,6 +15,8 @@ import { Arts } from './collections/Arts'
 import { ArtCategories } from './collections/ArtCategories'
 import { ArtTags } from './collections/ArtTags'
 import { ArtTagCategories } from './collections/ArtTagCategories'
+import { Roles } from './collections/Roles'
+import { AnalyticsCache } from './globals/AnalyticsCache'
 import { News } from './globals/News'
 import { SiteImages } from './globals/SiteImages'
 import { analyticsOverviewEndpoint } from './endpoints/analyticsOverview'
@@ -35,9 +37,41 @@ export default buildConfig({
       beforeDashboard: ['/components/admin/DashboardWidgets#DashboardWidgets'],
     },
   },
-  collections: [Users, Media, Arts, ArtCategories, ArtTags, ArtTagCategories],
-  globals: [News, SiteImages],
+  collections: [Users, Media, Arts, ArtCategories, ArtTags, ArtTagCategories, Roles],
+  globals: [News, SiteImages, AnalyticsCache],
   endpoints: [analyticsOverviewEndpoint, sentryIssuesEndpoint],
+  // First boot only: seeds a full-access admin role and assigns it to any user
+  // created before the role system existed, so nobody gets locked out.
+  onInit: async (payload) => {
+    const { totalDocs } = await payload.count({ collection: 'roles' })
+    if (totalDocs > 0) return
+
+    const adminRole = await payload.create({
+      collection: 'roles',
+      data: {
+        name: 'Administrateur',
+        isAdmin: true,
+        viewAnalytics: true,
+        viewSentry: true,
+      },
+    })
+
+    const { docs: usersWithoutRole } = await payload.find({
+      collection: 'users',
+      where: { role: { exists: false } },
+      limit: 0,
+    })
+
+    await Promise.all(
+      usersWithoutRole.map((user) =>
+        payload.update({
+          collection: 'users',
+          id: user.id,
+          data: { role: adminRole.id },
+        }),
+      ),
+    )
+  },
   localization: {
     locales: ['fr', 'en'],
     defaultLocale: 'fr',

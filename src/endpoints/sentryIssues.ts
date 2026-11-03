@@ -1,5 +1,6 @@
 import type { Endpoint } from 'payload'
 
+import { getUserRole } from '@/access/getUserRole'
 import { fetchSentryIssues, isSentryApiConfigured } from '@/lib/analytics/sentry'
 
 export const sentryIssuesEndpoint: Endpoint = {
@@ -8,6 +9,14 @@ export const sentryIssuesEndpoint: Endpoint = {
   handler: async (req) => {
     if (!req.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const role = await getUserRole(req)
+    if (!role?.isAdmin && !role?.viewSentry) {
+      return Response.json(
+        { error: "Vous n'avez pas la permission de voir ces informations." },
+        { status: 403 },
+      )
     }
 
     if (!isSentryApiConfigured()) {

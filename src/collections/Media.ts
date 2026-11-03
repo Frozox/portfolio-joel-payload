@@ -1,9 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
+import { collectionPermission } from '../access/collectionPermission'
+
 export const Media: CollectionConfig = {
   slug: 'media',
   access: {
     read: () => true,
+    create: collectionPermission('media', 'create'),
+    update: collectionPermission('media', 'update'),
+    delete: collectionPermission('media', 'delete'),
   },
   folders: true,
   fields: [

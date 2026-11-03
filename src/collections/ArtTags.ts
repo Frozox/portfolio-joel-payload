@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../access/authenticated'
-import { publishedOrAuthenticated } from '../access/publishedOrAuthenticated'
+import { collectionPermission } from '../access/collectionPermission'
+import { publishedOrCollectionRead } from '../access/publishedOrCollectionRead'
 
 export const ArtTags: CollectionConfig = {
   slug: 'art-tags',
@@ -14,10 +14,10 @@ export const ArtTags: CollectionConfig = {
     defaultColumns: ['tag', 'art_tag_category'],
   },
   access: {
-    read: publishedOrAuthenticated,
-    create: authenticated,
-    update: authenticated,
-    delete: authenticated,
+    read: publishedOrCollectionRead('art-tags'),
+    create: collectionPermission('art-tags', 'create'),
+    update: collectionPermission('art-tags', 'update'),
+    delete: collectionPermission('art-tags', 'delete'),
   },
   versions: {
     drafts: true,

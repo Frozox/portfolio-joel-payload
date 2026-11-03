@@ -1,5 +1,6 @@
 import type { GlobalConfig } from 'payload'
 
+import { globalPermission } from '../access/globalPermission'
 import { MediaBlock } from '../blocks/news/MediaBlock'
 import { SpacerBlock } from '../blocks/news/SpacerBlock'
 import { TextBlock } from '../blocks/news/TextBlock'
@@ -11,6 +12,7 @@ export const News: GlobalConfig = {
   label: 'Expositions',
   access: {
     read: () => true,
+    update: globalPermission('news', 'update'),
   },
   admin: {
     preview: () => generatePreviewPath({ path: '/expositions' }),

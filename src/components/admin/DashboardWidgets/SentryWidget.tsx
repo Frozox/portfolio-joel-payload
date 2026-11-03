@@ -22,18 +22,27 @@ type SentryOverview = {
 export const SentryWidget = () => {
   const [data, setData] = useState<SentryOverview | null>(null)
   const [loading, setLoading] = useState(true)
+  const [forbidden, setForbidden] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
 
     fetch('/api/sentry-issues', { signal: controller.signal })
-      .then((res) => res.json())
-      .then(setData)
+      .then((res) => {
+        if (res.status === 403) {
+          setForbidden(true)
+          return null
+        }
+        return res.json()
+      })
+      .then((json) => json && setData(json))
       .catch(() => setData({ configured: false, error: 'Erreur de chargement' }))
       .finally(() => setLoading(false))
 
     return () => controller.abort()
   }, [])
+
+  if (forbidden) return null
 
   return (
     <div className="dashboard-widget">
