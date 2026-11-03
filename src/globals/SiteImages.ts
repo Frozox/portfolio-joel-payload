@@ -1,12 +1,13 @@
 import type { GlobalConfig } from 'payload'
 
 import { globalPermission } from '../access/globalPermission'
+import { publicOrGlobalRead } from '../access/publicOrPermissionRead'
 
 export const SiteImages: GlobalConfig = {
   slug: 'site-images',
   label: 'Images statiques',
   access: {
-    read: () => true,
+    read: publicOrGlobalRead('site-images'),
     update: globalPermission('site-images', 'update'),
   },
   fields: [

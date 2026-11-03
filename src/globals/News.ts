@@ -1,6 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
 import { globalPermission } from '../access/globalPermission'
+import { publicOrGlobalRead } from '../access/publicOrPermissionRead'
 import { MediaBlock } from '../blocks/news/MediaBlock'
 import { SpacerBlock } from '../blocks/news/SpacerBlock'
 import { TextBlock } from '../blocks/news/TextBlock'
@@ -11,7 +12,7 @@ export const News: GlobalConfig = {
   slug: 'news',
   label: 'Expositions',
   access: {
-    read: () => true,
+    read: publicOrGlobalRead('news'),
     update: globalPermission('news', 'update'),
   },
   admin: {

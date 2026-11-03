@@ -1,11 +1,12 @@
 import type { CollectionConfig } from 'payload'
 
 import { collectionPermission } from '../access/collectionPermission'
+import { publicOrCollectionRead } from '../access/publicOrPermissionRead'
 
 export const Media: CollectionConfig = {
   slug: 'media',
   access: {
-    read: () => true,
+    read: publicOrCollectionRead('media'),
     create: collectionPermission('media', 'create'),
     update: collectionPermission('media', 'update'),
     delete: collectionPermission('media', 'delete'),

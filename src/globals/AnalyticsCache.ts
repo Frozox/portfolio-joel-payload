@@ -1,5 +1,7 @@
 import type { GlobalConfig } from 'payload'
 
+import { isSuperAdmin } from '../access/isSuperAdmin'
+
 // Internal cache populated by the background poller (see instrumentation.ts),
 // not meant to be edited manually - hidden from the admin nav.
 export const AnalyticsCache: GlobalConfig = {
@@ -8,8 +10,9 @@ export const AnalyticsCache: GlobalConfig = {
   admin: {
     hidden: true,
   },
+  // Served to widget users via /api/analytics-overview (Local API, bypasses access).
   access: {
-    read: ({ req }) => Boolean(req.user),
+    read: isSuperAdmin,
   },
   fields: [
     {

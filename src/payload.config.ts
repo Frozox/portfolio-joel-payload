@@ -28,6 +28,7 @@ const dirname = path.dirname(filename)
 const frontendHost = process.env.NEXT_PUBLIC_FRONTEND_HOST || 'http://localhost:3000'
 
 export default buildConfig({
+  csrf: [frontendHost],
   admin: {
     user: Users.slug,
     importMap: {

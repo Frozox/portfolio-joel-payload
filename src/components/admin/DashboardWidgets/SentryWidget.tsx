@@ -25,9 +25,7 @@ export const SentryWidget = () => {
   const [forbidden, setForbidden] = useState(false)
 
   useEffect(() => {
-    const controller = new AbortController()
-
-    fetch('/api/sentry-issues', { signal: controller.signal })
+    fetch('/api/sentry-issues')
       .then((res) => {
         if (res.status === 403) {
           setForbidden(true)
@@ -38,8 +36,6 @@ export const SentryWidget = () => {
       .then((json) => json && setData(json))
       .catch(() => setData({ configured: false, error: 'Erreur de chargement' }))
       .finally(() => setLoading(false))
-
-    return () => controller.abort()
   }, [])
 
   if (forbidden) return null

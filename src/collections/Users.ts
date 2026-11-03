@@ -1,14 +1,18 @@
 import type { CollectionConfig } from 'payload'
 
-import { collectionPermission, collectionPermissionField } from '../access/collectionPermission'
+import { collectionPermission } from '../access/collectionPermission'
+import { hiddenUnlessCollectionPermission } from '../access/hiddenUnlessCollectionPermission'
 import { isSelfOrUsersPermission } from '../access/isSelfOrAdmin'
+import { isSuperAdminField } from '../access/isSuperAdmin'
 
 export const Users: CollectionConfig = {
   slug: 'users',
   admin: {
     useAsTitle: 'email',
+    hidden: hiddenUnlessCollectionPermission('users'),
   },
-  auth: true,
+  // Populates `req.user.role` so `admin.hidden` can read permissions synchronously.
+  auth: { depth: 1 },
   access: {
     read: isSelfOrUsersPermission('read'),
     create: collectionPermission('users', 'create'),
@@ -54,7 +58,8 @@ export const Users: CollectionConfig = {
       // every access-control check resolving it via getUserRole() sees null.
       saveToJWT: true,
       access: {
-        update: collectionPermissionField('users', 'update'),
+        create: isSuperAdminField,
+        update: isSuperAdminField,
       },
     },
   ],
